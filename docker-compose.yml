@@ -14,12 +14,19 @@ services:
     env_file:
       - ./fastapi/.env
     
+    # 5. 確保 DB 先啟動
     depends_on:
-      - db  # 確保 DB 先啟動
-      
-    # 5. 確保容器當掉或電腦重啟時會自動重新啟動
+      - db
+
+    # 6. Bind Mount：把當前資料夾的 fastapi 資料夾對應到容器裡的 /app，這樣你在本機修改程式碼，容器裡的程式碼也會跟著變動
+    volumes:
+      - ./fastapi:/app
+    
+    # 7. 確保容器當掉或電腦重啟時會自動重新啟動
     restart: always
-    command: sh -c "sleep 3 && alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
+
+    # 8. 容器啟動後執行的命令，這裡先等 3 秒確保 DB 啟動完成，然後執行 Alembic 升級資料庫，最後啟動 FastAPI, 須注意 app.main:app 中的 app.main 是指你在 fastapi 資料夾裡的 main.py，冒號後的 app 是指你在 main.py 裡面建立的 FastAPI 實例名稱，如果你改了實例名稱，這裡也要跟著改
+    command: sh -c "sleep 3 && alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
   
 
   db:

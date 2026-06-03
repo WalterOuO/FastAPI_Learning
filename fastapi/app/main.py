@@ -23,7 +23,7 @@ app = FastAPI()
 
 # middleware 是一種在 request 和 response 之間執行的函式，可以用來處理跨域請求、驗證、日誌記錄等功能
 from fastapi.middleware.cors import CORSMiddleware
-origins = ["*"]             # 允許所有來源的請求，這裡可以根據需要修改為特定的域名或 IP 地址
+origins = ["*"]             # 允許所有來源的請求，這裡可以根據需要修改為特定的域名或 IP 地址, ex: ["https://google.com"]
 
 app.add_middleware(
     CORSMiddleware,
@@ -41,6 +41,6 @@ app.include_router(auth.router)
 
 @app.get("/")
 def read_root():
-    return {"Hello": "World"}
+    return {"message": "Hello World"}
 
 
