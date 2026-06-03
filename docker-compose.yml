@@ -1,0 +1,38 @@
+services:
+  web:
+    # 1. 告訴 Compose 去哪裡找 Dockerfile（就是當前資料夾 .）
+    build: ./fastapi
+    
+    # 2. 容器啟動後的名稱
+    container_name: fastapi_app
+    
+    # 3. 對應的連接埠 [電腦Port]:[容器Port]
+    ports:
+      - "8000:8000"
+    
+    # 4. 自動載入你當前資料夾底下的 .env 環境變數檔
+    env_file:
+      - ./fastapi/.env
+    
+    depends_on:
+      - db  # 確保 DB 先啟動
+      
+    # 5. 確保容器當掉或電腦重啟時會自動重新啟動
+    restart: always
+    command: sh -c "sleep 3 && alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
+  
+
+  db:
+    image: postgres:15-alpine # 可以換成你要的版號
+    restart: always
+    environment:
+      POSTGRES_USER: postgres       # 對應你 .env 的帳號
+      POSTGRES_PASSWORD: PostgreSQL # 對應你 .env 的密碼
+      POSTGRES_DB: fastapi          # 對應你 .env 的資料庫名稱
+    ports:
+      - "5432:5432" # 把容器的 5432 對應到本機的 5432，這樣你本地的 pgAdmin 才能連
+    volumes:                        # 把容器裡的資料庫資料夾對應到本機的卷，確保資料不會因為容器重啟而消失
+      - postgres-db:/var/lib/postgresql/data
+
+volumes:
+  postgres-db: # 確保資料庫重啟後資料不會消失

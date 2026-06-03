@@ -7,7 +7,6 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jwt.exceptions import InvalidTokenError
 from . import schemas, models
 from .database import SessionDep
-from pwdlib import PasswordHash
 from .config import settings
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
