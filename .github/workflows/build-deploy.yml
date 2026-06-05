@@ -8,23 +8,6 @@ jobs:
   job1:
     runs-on: ubuntu-latest
 
-    # 現代做法：在 CI 流程中直接拉起一個測試用的臨時資料庫
-    services:
-      postgres-db:
-        image: postgres:15
-        env:
-          POSTGRES_USER: test_user
-          POSTGRES_PASSWORD: ${{ secrets.DATABASE_PASSWORD }} # 從 Secrets 安全讀取
-          POSTGRES_DB: fastapi_test
-        ports:
-          - 5432:5432
-        # 確保 postgres 完全啟動後才開始跑 job
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     # 全局環境變數設定
     env:
       # 常數、非機密資訊可以直接寫明文
@@ -42,6 +25,19 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      # 💡 改在 steps 裡手動啟動 Postgres 容器，此時就能成功讀到 secrets
+      - name: Start PostgreSQL Service
+        run: |
+          docker run --name postgres-db \
+            -e POSTGRES_USER=test_user \
+            -e POSTGRES_PASSWORD=${{ secrets.DATABASE_PASSWORD }} \
+            -e POSTGRES_DB=fastapi_test \
+            -p 5432:5432 \
+            -d postgres:15
+          
+          # 等待資料庫就緒 (替代原本的 health check 參數)
+          sleep 5
 
       - name: Install python version 3.10
         uses: actions/setup-python@v5
