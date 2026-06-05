@@ -7,6 +7,7 @@ on:
 jobs:
   job1:
     runs-on: ubuntu-latest
+    working-directory: ./fastapi
 
     # 全局環境變數設定
     env:
