@@ -7,7 +7,6 @@ on:
 jobs:
   job1:
     runs-on: ubuntu-latest
-    working-directory: ./fastapi
 
     # 全局環境變數設定
     env:
@@ -53,8 +52,10 @@ jobs:
 
       - name: Install all dependencies
         run: pip install -r requirements.txt
+        working-directory: ./fastapi/app
 
       - name: Test with pytest
         run: |
           pip install pytest
           pytest
+        working-directory: ./fastapi/app
