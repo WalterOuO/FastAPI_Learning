@@ -46,7 +46,6 @@ jobs:
           cache: 'pip'          # 沒加 cache: 每次push完都要下載編譯安裝requirements套件，浪費時間
                                 #   加 cache: 第一次還是會下載，載完會內存到 GitHub快取空間，未來 push會先比對requirements
                                 #   如果沒變，就直接從快取空間解壓縮到虛擬機中還原，如果有變，就會重新下載安裝，然後更新快取空間的內容
-          cache-dependency-path: 'fastapi/app/requirements.txt'
 
       - name: Update pip
         run: python -m pip install --upgrade pip
