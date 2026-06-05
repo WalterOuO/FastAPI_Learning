@@ -1,3 +1,68 @@
+# name: FastAPI CI Test
+
+# on:
+#   push:
+#     branches: [ "main" ]
+
+# jobs:
+#   job1:
+#     environment: testing
+#     runs-on: ubuntu-latest
+
+#     # 全局環境變數設定
+#     env:
+#       # 常數、非機密資訊可以直接寫明文
+#       DATABASE_HOSTNAME: localhost
+#       DATABASE_PORT: 5432
+#       DATABASE_NAME: fastapi_test
+#       DATABASE_USERNAME: test_user
+#       ALGORITHM: HS256
+#       ACCESS_TOKEN_EXPIRE_MINUTES: 60
+      
+#       # 關鍵：敏感機密資訊，100% 透過安全憑證代入
+#       DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+#       SECRET_KEY: ${{ secrets.SECRET_KEY }}
+
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
+
+#       # 💡 改在 steps 裡手動啟動 Postgres 容器，此時就能成功讀到 secrets
+#       - name: Start PostgreSQL Service
+#         run: |
+#           docker run --name postgres-db \
+#             -e POSTGRES_USER=test_user \
+#             -e POSTGRES_PASSWORD=${{ secrets.DATABASE_PASSWORD }} \
+#             -e POSTGRES_DB=fastapi_test \
+#             -p 5432:5432 \
+#             -d postgres:15
+          
+#           # 等待資料庫就緒 (替代原本的 health check 參數)
+#           sleep 5
+
+#       - name: Install python version 3.10
+#         uses: actions/setup-python@v5
+#         with:
+#           python-version: "3.10"
+#           cache: 'pip'          # 沒加 cache: 每次push完都要下載編譯安裝requirements套件，浪費時間
+#                                 #   加 cache: 第一次還是會下載，載完會內存到 GitHub快取空間，未來 push會先比對requirements
+#                                 #   如果沒變，就直接從快取空間解壓縮到虛擬機中還原，如果有變，就會重新下載安裝，然後更新快取空間的內容
+
+#       - name: Update pip
+#         run: python -m pip install --upgrade pip
+
+#       - name: Install all dependencies
+#         run: pip install -r requirements.txt
+#         working-directory: ./fastapi/app
+
+#       - name: Test with pytest
+#         run: |
+#           pip install pytest
+#           pytest
+#         working-directory: ./fastapi/app
+
+
+
 name: FastAPI CI Test
 
 on:
@@ -6,7 +71,7 @@ on:
 
 jobs:
   job1:
-    runs-on: ubuntu-latest
+    environment: testing
 
     # 全局環境變數設定
     env:
@@ -22,40 +87,40 @@ jobs:
       DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
       SECRET_KEY: ${{ secrets.SECRET_KEY }}
 
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+          POSTGRES_DB: fastapi_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U test_user -d fastapi_test" 
+          --health-interval=10s 
+          --health-timeout=5s 
+          --health-retries=5
+
+
+    runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      # 💡 改在 steps 裡手動啟動 Postgres 容器，此時就能成功讀到 secrets
-      - name: Start PostgreSQL Service
-        run: |
-          docker run --name postgres-db \
-            -e POSTGRES_USER=test_user \
-            -e POSTGRES_PASSWORD=${{ secrets.DATABASE_PASSWORD }} \
-            -e POSTGRES_DB=fastapi_test \
-            -p 5432:5432 \
-            -d postgres:15
-          
-          # 等待資料庫就緒 (替代原本的 health check 參數)
-          sleep 5
 
       - name: Install python version 3.10
         uses: actions/setup-python@v5
         with:
           python-version: "3.10"
-          cache: 'pip'          # 沒加 cache: 每次push完都要下載編譯安裝requirements套件，浪費時間
-                                #   加 cache: 第一次還是會下載，載完會內存到 GitHub快取空間，未來 push會先比對requirements
-                                #   如果沒變，就直接從快取空間解壓縮到虛擬機中還原，如果有變，就會重新下載安裝，然後更新快取空間的內容
 
       - name: Update pip
         run: python -m pip install --upgrade pip
 
       - name: Install all dependencies
-        run: pip install -r fastapi/app/requirements.txt
-        # working-directory: ./fastapi/app
+        run: pip install -r requirements.txt
 
       - name: Test with pytest
         run: |
           pip install pytest
           pytest
-        working-directory: ./fastapi/app
