@@ -15,7 +15,7 @@ from .routers import post, user, auth
 from .config import settings 
 
 
-# After using Alembic to manage database migrations, we don't need to use0 SQLAlchemy's create_all() method anymore
+## After using Alembic to manage database migrations, we don't need to use0 SQLAlchemy's create_all() method to create tables anymore
 # models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
