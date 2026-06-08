@@ -1,1 +1,2 @@
-# Local_PDF_RAG_Assistant
+# FastAPI Learning
+The study material are mostly from  [freeCodeCamp: Python API Development]([url](https://youtu.be/0sOvCWFmrtA?si=mNC4jIsJJZIY4OX6))
