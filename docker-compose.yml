@@ -1,45 +1,44 @@
 services:
   web:
-    # 1. 告訴 Compose 去哪裡找 Dockerfile（就是當前資料夾 .）
-    build: ./fastapi
+    # build: ./fastapi
+    image: walterouo/fastapi:latest
     
-    # 2. 容器啟動後的名稱
     container_name: fastapi_app
     
-    # 3. 對應的連接埠 [電腦Port]:[容器Port]
     ports:
-      - "8000:8000"
+      - "80:8000"
     
-    # 4. 自動載入你當前資料夾底下的 .env 環境變數檔
-    env_file:
-      - ./fastapi/.env
-    
-    # 5. 確保 DB 先啟動
+    # env_file:
+    #   - ./fastapi/.env
+    environment:
+      - DATABASE_HOSTNAME=${DATABASE_HOSTNAME}
+      - DATABASE_PORT=${DATABASE_PORT}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - DATABASE_NAME=${DATABASE_NAME}
+      - DATABASE_USERNAME=${DATABASE_USERNAME}
+      - SECRET_KEY=${SECRET_KEY}
+      - ALGORITHM=${ALGORITHM}
+      - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES}
+
+
     depends_on:
       - db
-
-    # 6. Bind Mount：把當前資料夾的 fastapi 資料夾對應到容器裡的 /app，這樣你在本機修改程式碼，容器裡的程式碼也會跟著變動
-    volumes:
-      - ./fastapi:/app
     
-    # 7. 確保容器當掉或電腦重啟時會自動重新啟動
     restart: always
-
-    # 8. 容器啟動後執行的命令，這裡先等 3 秒確保 DB 啟動完成，然後執行 Alembic 升級資料庫，最後啟動 FastAPI, 須注意 app.main:app 中的 app.main 是指你在 fastapi 資料夾裡的 main.py，冒號後的 app 是指你在 main.py 裡面建立的 FastAPI 實例名稱，如果你改了實例名稱，這裡也要跟著改
-    command: sh -c "sleep 3 && alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+    command: sh -c "sleep 3 && alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
   
 
   db:
-    image: postgres:15-alpine # 可以換成你要的版號
+    image: postgres:15-alpine
     restart: always
     environment:
-      POSTGRES_USER: postgres       # 對應你 .env 的帳號
-      POSTGRES_PASSWORD: PostgreSQL # 對應你 .env 的密碼
-      POSTGRES_DB: fastapi          # 對應你 .env 的資料庫名稱
-    ports:
-      - "5432:5432" # 把容器的 5432 對應到本機的 5432，這樣你本地的 pgAdmin 才能連
-    volumes:                        # 把容器裡的資料庫資料夾對應到本機的卷，確保資料不會因為容器重啟而消失
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: ${DATABASE_NAME}
+    # ports:
+    #   - "5432:5432"  # 不開放外部連接埠，增加安全性
+    volumes:
       - postgres-db:/var/lib/postgresql/data
 
 volumes:
-  postgres-db: # 確保資料庫重啟後資料不會消失
+  postgres-db:
